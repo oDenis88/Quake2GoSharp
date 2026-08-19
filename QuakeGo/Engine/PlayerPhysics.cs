@@ -18,6 +18,8 @@ public sealed class PlayerPhysics
     private readonly int[] worldBrushIndices;
     private float verticalVelocity;
 
+    public bool IsGrounded { get; private set; }
+
     public PlayerPhysics(MapData map)
     {
         this.map = map;
@@ -46,12 +48,14 @@ public sealed class PlayerPhysics
             verticalVelocity = 0f;
         }
 
+        IsGrounded = IsStandingOnGround(moved);
         return moved;
     }
 
     public void ResetVerticalVelocity()
     {
         verticalVelocity = 0f;
+        IsGrounded = false;
     }
 
     /// <summary>
@@ -130,6 +134,18 @@ public sealed class PlayerPhysics
         }
 
         return requested;
+    }
+
+    private bool IsStandingOnGround(Vector3 origin)
+    {
+        if (Collides(origin))
+        {
+            return false;
+        }
+
+        // A tiny downward probe is enough to distinguish walking on the world
+        // from falling. It uses the same worldspawn-only collision filter.
+        return Collides(origin - Vector3.UnitZ * 2f);
     }
 
     private Vector3 MoveHorizontal(Vector3 origin, Vector3 delta)

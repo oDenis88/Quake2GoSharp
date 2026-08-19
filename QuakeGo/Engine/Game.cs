@@ -58,6 +58,8 @@ public sealed class Game : IDisposable
     }
 
     public bool IsFlying => initialized && camera.IsFlying;
+    public bool IsGrounded => initialized && camera.IsGrounded;
+    public Vector3 PlayerOrigin => initialized ? camera.GetPlayerOrigin() : Vector3.Zero;
 
     public void Initialize(int width, int height)
     {

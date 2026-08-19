@@ -38,6 +38,7 @@ public sealed class Camera
     public Vector3 Forward => GetForward(includePitch: true);
 
     public bool IsFlying { get; private set; }
+    public bool IsGrounded => !IsFlying && physics.IsGrounded;
 
     public Matrix4 GetViewMatrix()
     {

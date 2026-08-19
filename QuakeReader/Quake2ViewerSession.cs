@@ -1,9 +1,11 @@
 using GoQuake2;
+using QuakeReader.Audio;
 
 namespace QuakeReader;
 
 public sealed class Quake2ViewerSession : IDisposable
 {
+    private readonly MciMusicPlayer musicPlayer = new();
     private readonly Form form;
     private readonly TaskCompletionSource<bool> completion =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -37,6 +39,14 @@ public sealed class Quake2ViewerSession : IDisposable
             () => form.Close());
 
         form.Controls.Add(control);
+
+        string musicPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "music",
+            "map.mp3");
+
+                musicPlayer.Play(musicPath, loop: true);
+
         form.FormClosed += (_, _) => completion.TrySetResult(true);
     }
 
@@ -73,6 +83,7 @@ public sealed class Quake2ViewerSession : IDisposable
 
     public void Dispose()
     {
+        musicPlayer.Dispose();
         Close();
     }
 }

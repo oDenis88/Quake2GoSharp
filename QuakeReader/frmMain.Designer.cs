@@ -32,6 +32,8 @@
             txtPath = new TextBox();
             btnLoadBsp = new Button();
             lstBsps = new ListBox();
+            lblMaps = new Label();
+            lblPakFile = new Label();
             SuspendLayout();
             // 
             // btnLoadPak
@@ -46,10 +48,12 @@
             // 
             // txtPath
             // 
+            txtPath.ForeColor = Color.Gray;
             txtPath.Location = new Point(28, 32);
             txtPath.Name = "txtPath";
             txtPath.Size = new Size(416, 23);
             txtPath.TabIndex = 1;
+            txtPath.Text = "load a pak file from  base2";
             // 
             // btnLoadBsp
             // 
@@ -64,16 +68,38 @@
             // lstBsps
             // 
             lstBsps.FormattingEnabled = true;
-            lstBsps.Location = new Point(41, 66);
+            lstBsps.Location = new Point(28, 81);
             lstBsps.Name = "lstBsps";
-            lstBsps.Size = new Size(403, 229);
+            lstBsps.Size = new Size(416, 214);
             lstBsps.TabIndex = 4;
+            // 
+            // lblMaps
+            // 
+            lblMaps.AutoSize = true;
+            lblMaps.ForeColor = Color.Blue;
+            lblMaps.Location = new Point(28, 63);
+            lblMaps.Name = "lblMaps";
+            lblMaps.Size = new Size(81, 15);
+            lblMaps.TabIndex = 5;
+            lblMaps.Text = "Loaded Maps:";
+            // 
+            // lblPakFile
+            // 
+            lblPakFile.AutoSize = true;
+            lblPakFile.ForeColor = Color.Blue;
+            lblPakFile.Location = new Point(28, 14);
+            lblPakFile.Name = "lblPakFile";
+            lblPakFile.Size = new Size(94, 15);
+            lblPakFile.TabIndex = 6;
+            lblPakFile.Text = "Loaded PAK File:";
             // 
             // frmMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(578, 311);
+            Controls.Add(lblPakFile);
+            Controls.Add(lblMaps);
             Controls.Add(lstBsps);
             Controls.Add(btnLoadBsp);
             Controls.Add(txtPath);
@@ -94,5 +120,7 @@
         private TextBox txtPath;
         private Button btnLoadBsp;
         private ListBox lstBsps;
+        private Label lblMaps;
+        private Label lblPakFile;
     }
 }

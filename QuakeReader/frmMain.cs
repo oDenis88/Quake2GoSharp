@@ -27,6 +27,7 @@ public partial class frmMain : Form
         quake.LoadPak(dialog.FileName);
         txtPath.Text = dialog.FileName;
         lstBsps.DataSource = quake.Maps.ToList();
+        btnLoadPak.Enabled = false;
     }
 
     private void frmMain_Load(object sender, EventArgs e)
@@ -54,7 +55,21 @@ public partial class frmMain : Form
                 VSync = false
             });
 
+        viewer.Closed += Viewer_Closed;
+
         viewer.Show(this);
+    }
+
+    private void Viewer_Closed(object? sender, EventArgs e)
+    {
+        btnLoadBsp.Enabled = true;
+
+        if (viewer != null)
+        {
+            viewer.Closed -= Viewer_Closed;
+            viewer.Dispose();
+            viewer = null;
+        }
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)

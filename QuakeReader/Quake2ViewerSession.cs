@@ -7,7 +7,7 @@ public sealed class Quake2ViewerSession : IDisposable
     private readonly Form form;
     private readonly TaskCompletionSource<bool> completion =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
-
+    public event EventHandler? Closed;
     public Quake2ViewerSession(
         Quake2ViewerService service,
         string mapName,
@@ -23,6 +23,12 @@ public sealed class Quake2ViewerSession : IDisposable
             StartPosition = FormStartPosition.CenterScreen,
             KeyPreview = true
         };
+
+        form.FormClosed += (_, _) =>
+        {
+            Closed?.Invoke(this, EventArgs.Empty);
+        };
+
 
         var control = new Quake2MapControl(
             service,

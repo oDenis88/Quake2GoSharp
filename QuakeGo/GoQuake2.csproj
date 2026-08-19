@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NuGetAudit>False</NuGetAudit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTK" Version="4.9.3" />
+  </ItemGroup>
+  <!-- Host/UI classes belong to QuakeReader. These removals also protect
+       against stale files left behind by an older patch. -->
+  <ItemGroup>
+    <Compile Remove="Quake2MapControl.cs" />
+    <Compile Remove="Quake2ViewerSession.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Include="Shaders\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,72 @@
+using GoQuake2;
+
+namespace QuakeReader;
+
+public sealed class Quake2ViewerSession : IDisposable
+{
+    private readonly Form form;
+    private readonly TaskCompletionSource<bool> completion =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Quake2ViewerSession(
+        Quake2ViewerService service,
+        string mapName,
+        Quake2ViewerOptions? options = null)
+    {
+        options ??= new Quake2ViewerOptions();
+        string normalized = service.NormalizeMapName(mapName);
+
+        form = new Form
+        {
+            Text = $"{options.WindowTitle} - {normalized}",
+            ClientSize = new Size(options.Width, options.Height),
+            StartPosition = FormStartPosition.CenterScreen,
+            KeyPreview = true
+        };
+
+        var control = new Quake2MapControl(
+            service,
+            normalized,
+            options,
+            () => form.Close());
+
+        form.Controls.Add(control);
+        form.FormClosed += (_, _) => completion.TrySetResult(true);
+    }
+
+    public Task Completion => completion.Task;
+    public Form Window => form;
+
+    public void Show(IWin32Window? owner = null)
+    {
+        if (owner is null)
+        {
+            form.Show();
+        }
+        else
+        {
+            form.Show(owner);
+        }
+    }
+
+    public void Close()
+    {
+        if (form.IsDisposed)
+        {
+            return;
+        }
+
+        if (form.InvokeRequired)
+        {
+            form.BeginInvoke(Close);
+            return;
+        }
+
+        form.Close();
+    }
+
+    public void Dispose()
+    {
+        Close();
+    }
+}

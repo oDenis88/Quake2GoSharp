@@ -1,0 +1,1 @@
+Copy Quake II demo baseq2/pak0.pak here and name it pak0.pak.

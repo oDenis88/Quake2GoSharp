@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="QuakeGo/GoQuake2.csproj" />
+  <Project Path="QuakeReader/QuakeReader.csproj" />
+</Solution>

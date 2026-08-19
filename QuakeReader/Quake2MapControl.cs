@@ -1,0 +1,224 @@
+using System.Diagnostics;
+using System.Drawing;
+using System.Windows.Forms;
+using GoQuake2;
+using GoQuake2.Client;
+using GoQuake2.Engine;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using GLHostControl = OpenTK.GLControl.GLControl;
+
+namespace QuakeReader;
+
+/// <summary>
+/// Host WinForms do renderer. Esta classe fica no executavel WinForms;
+/// a DLL GoQuake2 permanece independente de System.Windows.Forms.
+/// </summary>
+public sealed class Quake2MapControl : GLHostControl
+{
+    private readonly Game game;
+    private readonly InputState input = new();
+    private readonly System.Windows.Forms.Timer renderTimer;
+    private readonly Stopwatch clock = Stopwatch.StartNew();
+    private readonly Action? closeRequested;
+
+    private Vector2 mouseDelta;
+    private Point lastMousePosition;
+    private bool hasMousePosition;
+    private double lastFrameTime;
+    private bool disposed;
+
+    public Quake2MapControl(
+        Quake2ViewerService service,
+        string mapName,
+        Quake2ViewerOptions options,
+        Action? closeRequested = null)
+    {
+        this.closeRequested = closeRequested;
+
+        API = ContextAPI.OpenGL;
+        APIVersion = new Version(3, 3);
+        Profile = ContextProfile.Core;
+        Flags = ContextFlags.ForwardCompatible;
+        IsEventDriven = false;
+
+        Dock = DockStyle.Fill;
+        TabStop = true;
+        BackColor = Color.Black;
+
+        game = new Game(service, service.NormalizeMapName(mapName));
+
+        KeyDown += OnViewerKeyDown;
+        KeyUp += OnViewerKeyUp;
+        MouseDown += OnViewerMouseDown;
+        MouseMove += OnViewerMouseMove;
+        MouseEnter += (_, _) => Focus();
+        LostFocus += (_, _) =>
+        {
+            input.Clear();
+            hasMousePosition = false;
+        };
+
+        renderTimer = new System.Windows.Forms.Timer
+        {
+            Interval = 8
+        };
+
+        renderTimer.Tick += (_, _) => Invalidate();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+
+        if (IsDesignMode || !HasValidContext)
+        {
+            return;
+        }
+
+        MakeCurrent();
+        game.Initialize(ClientSize.Width, ClientSize.Height);
+        lastFrameTime = clock.Elapsed.TotalSeconds;
+        renderTimer.Start();
+        Focus();
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        if (IsDesignMode || !HasValidContext || disposed)
+        {
+            base.OnPaint(e);
+            return;
+        }
+
+        MakeCurrent();
+
+        double now = clock.Elapsed.TotalSeconds;
+        double dt = Math.Clamp(now - lastFrameTime, 0d, 0.1d);
+        lastFrameTime = now;
+
+        Vector2 delta = mouseDelta;
+        mouseDelta = Vector2.Zero;
+
+        game.Update(dt, input, delta);
+        game.Render(
+            Math.Max(1, ClientSize.Width),
+            Math.Max(1, ClientSize.Height));
+
+        SwapBuffers();
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+
+        if (!HasValidContext || disposed)
+        {
+            return;
+        }
+
+        MakeCurrent();
+        game.Resize(ClientSize.Width, ClientSize.Height);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !disposed)
+        {
+            renderTimer.Stop();
+            renderTimer.Dispose();
+
+            if (HasValidContext)
+            {
+                MakeCurrent();
+                game.Dispose();
+            }
+
+            disposed = true;
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private void OnViewerKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (TryMapKey(e.KeyCode, out PlayerKey key))
+        {
+            input.KeyDown(key);
+        }
+
+        if (e.KeyCode == Keys.Escape)
+        {
+            closeRequested?.Invoke();
+            e.Handled = true;
+        }
+    }
+
+    private void OnViewerKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (TryMapKey(e.KeyCode, out PlayerKey key))
+        {
+            input.KeyUp(key);
+        }
+    }
+
+    private void OnViewerMouseDown(object? sender, MouseEventArgs e)
+    {
+        Focus();
+        lastMousePosition = e.Location;
+        hasMousePosition = true;
+    }
+
+    private void OnViewerMouseMove(object? sender, MouseEventArgs e)
+    {
+        if (!Focused)
+        {
+            return;
+        }
+
+        if (!hasMousePosition)
+        {
+            lastMousePosition = e.Location;
+            hasMousePosition = true;
+            return;
+        }
+
+        mouseDelta.X += e.X - lastMousePosition.X;
+        mouseDelta.Y += e.Y - lastMousePosition.Y;
+        lastMousePosition = e.Location;
+    }
+
+    private static bool TryMapKey(Keys keyCode, out PlayerKey key)
+    {
+        switch (keyCode)
+        {
+            case Keys.W:
+                key = PlayerKey.W;
+                return true;
+
+            case Keys.A:
+                key = PlayerKey.A;
+                return true;
+
+            case Keys.S:
+                key = PlayerKey.S;
+                return true;
+
+            case Keys.D:
+                key = PlayerKey.D;
+                return true;
+
+            case Keys.Space:
+                key = PlayerKey.Space;
+                return true;
+
+            case Keys.Escape:
+                key = PlayerKey.Escape;
+                return true;
+
+            default:
+                key = default;
+                return false;
+        }
+    }
+}

@@ -45,7 +45,35 @@ public sealed class Quake2ViewerSession : IDisposable
             "music",
             "map.mp3");
 
-                musicPlayer.Play(musicPath, loop: true);
+        var helpLabel = new Label
+        {
+            AutoSize = true,
+            Text =
+            "Use W, A, S, D to move around\r\n" +
+            "Hold Spacebar to fly around",
+
+            ForeColor = Color.White,
+            BackColor = Color.FromArgb(32, 32, 32),
+
+            Font = new Font(
+                "Segoe UI",
+                10f,
+                FontStyle.Regular),
+
+            Padding = new Padding(6),
+            Location = new Point(
+            12,
+            form.ClientSize.Height - 65),
+
+            Anchor =
+            AnchorStyles.Left |
+            AnchorStyles.Bottom
+            };
+
+        form.Controls.Add(helpLabel);
+        helpLabel.BringToFront();
+
+        musicPlayer.Play(musicPath, loop: true);
 
         form.FormClosed += (_, _) => completion.TrySetResult(true);
     }

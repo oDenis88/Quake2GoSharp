@@ -12,6 +12,7 @@ namespace GoQuake2.Engine;
 /// </summary>
 public sealed class Game : IDisposable
 {
+    private readonly List<BlasterProjectile> blasterProjectiles = new();
     public const float MouseSensitivity = 0.7f;
     public const float CameraSpeed = 200f;
     public const float CameraFov = 70f;
@@ -43,6 +44,19 @@ public sealed class Game : IDisposable
         this.mapName = mapName;
     }
 
+    public void FireBlaster()
+    {
+        Vector3 origin = camera.Position;
+        Vector3 direction = camera.Forward;
+
+        origin += direction * 8f;
+
+        blasterProjectiles.Add(
+            new BlasterProjectile(
+                origin,
+                direction * 900f));
+    }
+
     public bool IsFlying => initialized && camera.IsFlying;
 
     public void Initialize(int width, int height)
@@ -68,6 +82,8 @@ public sealed class Game : IDisposable
 
         camera.Update(dt, keys, mouseDelta);
 
+        UpdateBlasterProjectiles(dt);
+
         var leaf = bsp.FindLeafNode(0, map, camera.GetCameraPosition());
         if (previousLeaf == leaf.LeafIndex)
         {
@@ -82,6 +98,46 @@ public sealed class Game : IDisposable
         previousLeaf = leaf.LeafIndex;
     }
 
+    private void RenderBlasterProjectiles(int width, int height)
+    {
+        if (blasterProjectiles.Count == 0)
+        {
+            return;
+        }
+
+        Matrix4 view = camera.GetViewMatrix();
+        Matrix4 projection = camera.GetPerspectiveMatrix(width, height);
+
+        foreach (BlasterProjectile projectile in blasterProjectiles)
+        {
+            Vector3 direction = projectile.Velocity.Normalized();
+
+            // Pequeno bolt/tracer, em vez de uma linha ocupando o mapa inteiro.
+            Vector3 head = projectile.Position;
+            Vector3 tail = head - direction * 48f;
+
+            renderer.DrawBlaster(tail, head, view, projection);
+        }
+    }
+
+    private void UpdateBlasterProjectiles(double dt)
+    {
+        for (int i = blasterProjectiles.Count - 1; i >= 0; i--)
+        {
+            BlasterProjectile projectile = blasterProjectiles[i];
+
+            projectile.Position +=
+                projectile.Velocity * (float)dt;
+
+            projectile.Lifetime -= (float)dt;
+
+            if (projectile.Lifetime <= 0f)
+            {
+                blasterProjectiles.RemoveAt(i);
+            }
+        }
+    }
+
     public void Render(int width, int height)
     {
         if (!initialized)
@@ -94,6 +150,7 @@ public sealed class Game : IDisposable
             camera.GetViewMatrix(),
             camera.GetPerspectiveMatrix(width, height));
         renderer.Draw(renderMap);
+        RenderBlasterProjectiles(width, height);
 
         UpdateFpsCounter();
     }

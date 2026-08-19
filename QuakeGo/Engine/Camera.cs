@@ -27,6 +27,16 @@ public sealed class Camera
         pitch = 0f;
     }
 
+    /// <summary>
+    /// Posicao dos olhos da camera no mundo. Esta e a origem correta para tiros.
+    /// </summary>
+    public Vector3 Position => GetEyePosition();
+
+    /// <summary>
+    /// Vetor unitario apontando para onde a camera esta olhando.
+    /// </summary>
+    public Vector3 Forward => GetForward(includePitch: true);
+
     public bool IsFlying { get; private set; }
 
     public Matrix4 GetViewMatrix()
@@ -53,7 +63,15 @@ public sealed class Camera
     {
         UpdateLook(mouseDelta);
 
+        bool wasFlying = IsFlying;
         IsFlying = input.IsActive(PlayerAction.Fly, keys);
+
+        // GMod-like behavior: Space is noclip only while held. The instant it is
+        // released, return to physical mode and let gravity pull the viewer down.
+        if (wasFlying && !IsFlying)
+        {
+            playerOrigin = physics.PrepareForGroundedMode(playerOrigin);
+        }
 
         float forwardInput = 0f;
         float rightInput = 0f;
@@ -144,8 +162,6 @@ public sealed class Camera
 
     private void UpdateLook(Vector2 mouseDelta)
     {
-        // Quake usa Z como eixo vertical. Mouse para a direita deve girar o yaw
-        // no sentido horario visto de cima; mouse para cima aumenta o pitch.
         yaw -= (float)(mouseDelta.X * Game.MouseSensitivity * 0.025);
         pitch -= (float)(mouseDelta.Y * Game.MouseSensitivity * 0.025);
 
@@ -186,7 +202,6 @@ public sealed class Camera
             }
         }
 
-        // Fallback mantido apenas para BSPs sem entidade de spawn.
         return (new Vector3(50f, -256f, 50f), 0f);
     }
 }

@@ -16,6 +16,11 @@ public readonly record struct VisibilityOffset(uint Pvs, uint Phs);
 public readonly record struct PakFile(string Filename, uint Offset, uint Length);
 public readonly record struct Brush(uint FirstSide, uint NumSides, uint Contents);
 public readonly record struct BrushSide(ushort Plane, short TextureInfo);
+public readonly record struct BspModel(
+    float MinX, float MinY, float MinZ,
+    float MaxX, float MaxY, float MaxZ,
+    float OriginX, float OriginY, float OriginZ,
+    int HeadNode, int FirstFace, int NumFaces);
 
 public sealed class TexInfo
 {
@@ -87,6 +92,7 @@ public sealed class MapData
     public ushort[] LeafBrushes = [];
     public Brush[] Brushes = [];
     public BrushSide[] BrushSides = [];
+    public BspModel[] Models = [];
     public byte[] VisibilityData = [];
     public VisibilityOffset[] VisibilityOffsets = [];
 }

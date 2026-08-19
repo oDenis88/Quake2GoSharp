@@ -6,6 +6,7 @@ using GoQuake2.Client;
 using GoQuake2.Engine;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using QuakeReader.Audio;
 using GLHostControl = OpenTK.GLControl.GLControl;
 
 namespace QuakeReader;
@@ -21,6 +22,7 @@ public sealed class Quake2MapControl : GLHostControl
     private readonly System.Windows.Forms.Timer renderTimer;
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly Action? closeRequested;
+    private readonly WaveSoundPlayer? blasterSound;
 
     private Vector2 mouseDelta;
     private Point lastMousePosition;
@@ -32,9 +34,11 @@ public sealed class Quake2MapControl : GLHostControl
         Quake2ViewerService service,
         string mapName,
         Quake2ViewerOptions options,
-        Action? closeRequested = null)
+        Action? closeRequested = null,
+        Action? toggleMusicRequested = null)
     {
         this.closeRequested = closeRequested;
+        this.toggleMusicRequested = toggleMusicRequested;
 
         API = ContextAPI.OpenGL;
         APIVersion = new Version(3, 3);
@@ -47,6 +51,11 @@ public sealed class Quake2MapControl : GLHostControl
         BackColor = Color.Black;
 
         game = new Game(service, service.NormalizeMapName(mapName));
+
+        if (service.TryLoadFileBytes("sound/weapons/blastf1a.wav", out byte[] blasterWave))
+        {
+            blasterSound = new WaveSoundPlayer(blasterWave);
+        }
 
         KeyDown += OnViewerKeyDown;
         KeyUp += OnViewerKeyUp;
@@ -127,6 +136,7 @@ public sealed class Quake2MapControl : GLHostControl
         {
             renderTimer.Stop();
             renderTimer.Dispose();
+            blasterSound?.Dispose();
 
             if (HasValidContext)
             {
@@ -139,12 +149,18 @@ public sealed class Quake2MapControl : GLHostControl
 
         base.Dispose(disposing);
     }
-
+    private readonly Action? toggleMusicRequested;
     private void OnViewerKeyDown(object? sender, KeyEventArgs e)
     {
         if (TryMapKey(e.KeyCode, out PlayerKey key))
         {
             input.KeyDown(key);
+        }
+
+        if (e.KeyCode == Keys.M)
+        {
+            toggleMusicRequested?.Invoke();
+            e.Handled = true;
         }
 
         if (e.KeyCode == Keys.Escape)
@@ -165,8 +181,17 @@ public sealed class Quake2MapControl : GLHostControl
     private void OnViewerMouseDown(object? sender, MouseEventArgs e)
     {
         Focus();
+
         lastMousePosition = e.Location;
         hasMousePosition = true;
+
+        switch (e.Button)
+        {
+            case MouseButtons.Left:
+                game.FireBlaster();
+                blasterSound?.Play();
+                break;
+        }
     }
 
     private void OnViewerMouseMove(object? sender, MouseEventArgs e)

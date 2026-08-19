@@ -56,6 +56,45 @@ public sealed class Quake2ViewerService
         return PakLoader.LoadQ2WalFromPak(stream, files, walName);
     }
 
+    public byte[] LoadFileBytes(string pakFileName)
+    {
+        EnsurePakLoaded();
+
+        if (string.IsNullOrWhiteSpace(pakFileName))
+        {
+            throw new ArgumentException("PAK file name cannot be empty.", nameof(pakFileName));
+        }
+
+        string normalized = pakFileName.Replace('\\', '/').TrimStart('/');
+
+        if (!files.TryGetValue(normalized, out PakFile file))
+        {
+            throw new FileNotFoundException(
+                $"File '{normalized}' was not found in the loaded PAK.");
+        }
+
+        using var stream = File.OpenRead(PakPath!);
+        stream.Position = file.Offset;
+
+        byte[] data = new byte[checked((int)file.Length)];
+        stream.ReadExactly(data);
+        return data;
+    }
+
+    public bool TryLoadFileBytes(string pakFileName, out byte[] data)
+    {
+        try
+        {
+            data = LoadFileBytes(pakFileName);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            data = [];
+            return false;
+        }
+    }
+
     public string NormalizeMapName(string mapName)
     {
         if (string.IsNullOrWhiteSpace(mapName))

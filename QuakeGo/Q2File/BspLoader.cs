@@ -17,6 +17,7 @@ public static class BspLoader
     private const int LumpLeafBrushes = 10;
     private const int LumpEdges = 11;
     private const int LumpFaceEdges = 12;
+    private const int LumpModels = 13;
     private const int LumpBrushes = 14;
     private const int LumpBrushSides = 15;
 
@@ -184,6 +185,16 @@ public static class BspLoader
 
         map.LeafFaces = ReadArray(stream, lumps[LumpLeafFaces], 2, r => r.ReadInt16(), "Leaf face");
         map.LeafBrushes = ReadArray(stream, lumps[LumpLeafBrushes], 2, r => r.ReadUInt16(), "Leaf brush");
+        map.Models = ReadArray(
+            stream,
+            lumps[LumpModels],
+            48,
+            r => new BspModel(
+                r.ReadSingle(), r.ReadSingle(), r.ReadSingle(),
+                r.ReadSingle(), r.ReadSingle(), r.ReadSingle(),
+                r.ReadSingle(), r.ReadSingle(), r.ReadSingle(),
+                r.ReadInt32(), r.ReadInt32(), r.ReadInt32()),
+            "BSP Model");
         map.Brushes = ReadArray(
             stream,
             lumps[LumpBrushes],
